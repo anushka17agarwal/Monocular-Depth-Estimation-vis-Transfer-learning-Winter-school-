@@ -9,10 +9,13 @@ from tensorflow.keras.applications import DenseNet169
 import sklearn
 import os
 import matplotlib.pyplot as plt
-
+from keras import applications
 from skimage import io
 from zipfile import ZipFile
-
+from keras.models import Model, load_model
+from keras.layers import Input, InputLayer, Conv2D, Activation, LeakyReLU, Concatenate
+from layers import BilinearUpSampling2D
+from loss import depth_loss_function
 
 config = tf.compat.v1.ConfigProto()
 config.gpu_options.allow_growth = True
@@ -79,6 +82,15 @@ if args.data == 'nyu':
     test_generator = dataset_test.batch(batch_size=batch_size)
 
 #########################Based model Densenet 169##########################
+base_model = applications.densenet.DenseNet201(input_shape=(None, None, 3), include_top=False)
+base_model_output_shape = base_model.layers[-1].output.shape
+
+#freezing the layer
+for layer in base_model.layers: layer.trainable = True
+if is_halffeatures:
+    decode_filters = int(int(base_model_output_shape[-1])/2)
+else:
+    decode_filters = int(base_model_output_shape[-1])
 #### UpscaleBlock_model ############
 #### UpscaleBlock_model2 ############
 #### UpscaleBlock_model3 ############
